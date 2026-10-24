@@ -1,0 +1,23 @@
+# 构建产物与本地缓存不进镜像
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# 运行时数据在 Docker 卷里，不在镜像里
+data/
+.env
+
+# 版本库与开发辅助文件
+.git/
+.github/
+.vscode/
+scripts/
+smoke_test.py
+README.md
+Dockerfile
+docker-compose.yml
+.dockerignore
+.gitattributes

@@ -3,21 +3,29 @@ services:
     build: .
     ports:
       - "4173:4173"
+    # 端口与密钥统一由 .env 提供（deploy.sh 首次部署时生成随机值）。
+    # environment 里的非机密项作为缺省值，.env 优先。
     environment:
       MONETA_HOST: 0.0.0.0
       MONETA_PORT: "4173"
       MONETA_DATA_DIR: /data
-      # 上线前必须修改
-      MONETA_DEVELOPER_KEY: "change-me-developer-key"
-      MONETA_ADMIN_PASSWORD: "change-me-admin-password"
       MONETA_INITIAL_BALANCE: "100000"
       MONETA_TICK_MS: "250"
       MONETA_PERSIST_MS: "5000"
-      # 如有对外域名（含隧道转发），取消注释并填写
-      # MONETA_PUBLIC_DOMAIN: "fx.example.com"
+    # 部署脚本 scripts/deploy.sh 首次运行会生成 .env；手动部署时自行创建，
+    # 内容见 README 的“环境变量”一节。缺失时上面的 environment 缺省值仍可启动。
+    env_file:
+      - path: .env
+        required: false
     volumes:
       - moneta-data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:4173/api/config', timeout=3).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   moneta-data:

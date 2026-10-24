@@ -22,6 +22,7 @@ import ipaddress
 import os
 import secrets
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -83,18 +84,28 @@ def load_state() -> None:
         print(f"[moneta] 存档读取失败，已重新开局：{error}")
 
 
-def save_state() -> None:
-    try:
-        import json
+SAVE_LOCK = threading.Lock()
 
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        state = runtime.snapshot_state()
-        state["_savedAtMs"] = int(time.time() * 1000)
-        temp = STATE_DIR_TMP
-        temp.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
-        temp.replace(STATE_PATH)
-    except Exception as error:  # pragma: no cover - defensive
-        print(f"[moneta] 存档写入失败：{error}")
+
+def save_state() -> None:
+    """把世界快照原子写入磁盘。
+
+    tick 线程与 autosave 协程都会触发这里，必须串行：两个线程同时
+    写同一个 world.tmp 时，后一个 replace 会把前一个刚写好的临时文件
+    移走，前一个再 replace 就得到 Errno 2。锁住整段读写即可。
+    """
+    with SAVE_LOCK:
+        try:
+            import json
+
+            DATA_DIR.mkdir(parents=True, exist_ok=True)
+            state = runtime.snapshot_state()
+            state["_savedAtMs"] = int(time.time() * 1000)
+            temp = STATE_DIR_TMP
+            temp.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+            temp.replace(STATE_PATH)
+        except Exception as error:  # pragma: no cover - defensive
+            print(f"[moneta] 存档写入失败：{error}")
 
 
 STATE_DIR_TMP = DATA_DIR / "world.tmp"
