@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# 运行时数据（共享市场存档，含账户口令散列，不要提交）
+data/
+server/data/
+
+# 本地环境配置
+.env
+.env.local
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志
+*.log
+
+# 依赖锁（部署用 Dockerfile 固定依赖）
+package-lock.json
+
+# API 推送脚本记录的上一次远端 commit
+.api-push-parent
